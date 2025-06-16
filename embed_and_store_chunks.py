@@ -5,6 +5,7 @@ from bedrock_wrapper import embed_texts
 import os
 import json
 import numpy as np
+import faiss
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -27,9 +28,10 @@ PDF_KEYS = [
 CACHE_DIR = Path("cache")
 EMBEDDINGS_FILE = CACHE_DIR / "embeddings.npy"
 CHUNKS_FILE = CACHE_DIR / "chunks.json"
+FAISS_INDEX_FILE = CACHE_DIR / "faiss_index.bin"
 
 def save_to_cache(chunks, embeddings):
-    """Save chunks and embeddings to cache files."""
+    """Save chunks, embeddings, and FAISS index to cache files."""
     # Create cache directory if it doesn't exist
     CACHE_DIR.mkdir(exist_ok=True)
     
@@ -40,18 +42,24 @@ def save_to_cache(chunks, embeddings):
     with open(CHUNKS_FILE, "w") as f:
         json.dump(chunks, f)
     
-    print(f"✅ Saved {len(chunks)} chunks and embeddings to cache")
+    # Create and save FAISS index
+    dimension = len(embeddings[0])  # Get embedding dimension
+    index = faiss.IndexFlatL2(dimension)  # Create FAISS index
+    index.add(np.array(embeddings).astype('float32'))  # Add vectors to index
+    faiss.write_index(index, str(FAISS_INDEX_FILE))  # Save index
+    
+    print(f"✅ Saved {len(chunks)} chunks, embeddings, and FAISS index to cache")
 
 def load_from_cache():
-    """Load chunks and embeddings from cache if they exist."""
-    if not (EMBEDDINGS_FILE.exists() and CHUNKS_FILE.exists()):
+    """Load chunks, embeddings, and FAISS index from cache if they exist."""
+    if not (EMBEDDINGS_FILE.exists() and CHUNKS_FILE.exists() and FAISS_INDEX_FILE.exists()):
         return None, None
         
     try:
         embeddings = np.load(EMBEDDINGS_FILE)
         with open(CHUNKS_FILE, "r") as f:
             chunks = json.load(f)
-        print(f"✅ Loaded {len(chunks)} chunks and embeddings from cache")
+        print(f"✅ Loaded {len(chunks)} chunks, embeddings, and FAISS index from cache")
         return chunks, embeddings
     except Exception as e:
         print(f"❌ Error loading from cache: {str(e)}")
@@ -92,7 +100,7 @@ def process_documents():
     save_to_cache(all_chunks, all_embeddings)
     
     return all_chunks, all_embeddings
-
+ 
 if __name__ == "__main__":
     chunks, embeddings = process_documents()
     

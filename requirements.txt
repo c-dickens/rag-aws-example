@@ -1,2 +1,4 @@
 boto3>=1.38.36
-pdfminer.six>=20250506 
+pdfminer.six>=20250506
+faiss-cpu>=1.7.4
+numpy>=1.24.0 
