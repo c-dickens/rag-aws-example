@@ -23,7 +23,12 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Configure AWS credentials:
+3. Copy `.env.example` to `.env` and fill in your AWS credentials and S3 bucket details:
+```bash
+cp .env.example .env
+```
+
+4. Configure AWS credentials:
 - Ensure you have AWS credentials configured with appropriate permissions for Bedrock and S3
 - Set up your AWS credentials in `~/.aws/credentials` or using environment variables
 
