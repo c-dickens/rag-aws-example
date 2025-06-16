@@ -1,7 +1,3 @@
-import numpy as np
-import faiss
-import json
-from pathlib import Path
 from typing import List, Dict, Any
 from bedrock_wrapper import embed_texts, generate_answer
 from retriever import RAGRetriever
