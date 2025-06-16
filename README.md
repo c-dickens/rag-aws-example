@@ -27,6 +27,33 @@ pip install -r requirements.txt
 - Ensure you have AWS credentials configured with appropriate permissions for Bedrock and S3
 - Set up your AWS credentials in `~/.aws/credentials` or using environment variables
 
+## Preprocessing Documents
+
+Before running any queries or the test suite you need to build the local cache
+of embedded document chunks. The script `embed_and_store_chunks.py` downloads
+the PDF files from your S3 bucket, generates embeddings using Bedrock and saves
+them locally.
+
+Ensure the following environment variables are available (they can be defined
+in a `.env` file):
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_DEFAULT_REGION` *(or `AWS_REGION`)*
+- `S3_BUCKET_NAME`
+
+Run the preprocessing step:
+
+```bash
+python embed_and_store_chunks.py
+```
+
+After it completes you should see these files inside the `cache/` directory:
+
+- `embeddings.npy`
+- `chunks.json`
+- `faiss_index.bin`
+
 ## Project Structure
 
 - `bedrock_wrapper.py`: AWS Bedrock integration
