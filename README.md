@@ -32,15 +32,25 @@ pip install -r requirements.txt
 - `bedrock_wrapper.py`: AWS Bedrock integration
 - `embed_and_store_chunks.py`: Document processing and embedding
 - `tools.py`: Core utility functions
-- `test_*.py`: Test files for various components
+- `tests/`: Directory containing all test files
 - `docs/`: Documentation
 - `notebooks/`: Jupyter notebooks for experimentation
 
 ## Testing
 
-Run the test suite:
+To run all tests:
 ```bash
-python -m pytest test_*.py
+python -m pytest tests/
+```
+
+To run a specific test file:
+```bash
+python -m pytest tests/test_rag_pipeline.py
+```
+
+For verbose output:
+```bash
+python -m pytest -v tests/
 ```
 
 ## License
