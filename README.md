@@ -53,6 +53,19 @@ For verbose output:
 python -m pytest -v tests/
 ```
 
+## Bedrock LLM Call Usage
+
+The function `generate_answer(prompt, context_chunks)` in `bedrock_wrapper.py` calls an LLM (Titan) to answer a user question using retrieved context. Example usage:
+
+```python
+from bedrock_wrapper import generate_answer
+
+context_chunks = ["Chunk 1 text", "Chunk 2 text"]
+user_question = "What are the benefits of AI in healthcare?"
+response = generate_answer(user_question, context_chunks)
+print(response)
+```
+
 ## License
 
 MIT License 

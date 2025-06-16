@@ -7,16 +7,11 @@ load_dotenv()
 def test_pdf_processing():
     # Get bucket name from environment variable
     bucket = os.getenv('S3_BUCKET_NAME')
-    print(f"Processing bucket: {bucket}")
-    if not bucket:
-        raise ValueError("Please set S3_BUCKET_NAME environment variable")
-    
+    assert bucket, "Please set S3_BUCKET_NAME environment variable"
     # Process all PDFs in the docs/ prefix
     chunks = process_all_pdfs_in_bucket(bucket, prefix='')
-    
-    # Print summary
+    assert isinstance(chunks, list), "Chunks should be a list"
     print(f"\nProcessed {len(chunks)} chunks from PDFs in bucket {bucket}")
-    
     # Print first chunk as example
     if chunks:
         print("\nExample chunk:")

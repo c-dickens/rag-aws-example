@@ -38,12 +38,23 @@ def embed_texts(text_list, model_id="amazon.titan-embed-text-v2:0"):
     return embeddings[0] if len(text_list) == 1 else embeddings
 
 
-def generate_answer(prompt, model_id="amazon.titan-text-express-v1"):
-    """Generates a response to a prompt using Titan model."""
+def generate_answer(prompt, context_chunks, model_id="amazon.titan-text-express-v1"):
+    """Generates a response to a prompt and context using Titan model.
+    Args:
+        prompt (str): The user question
+        context_chunks (List[str]): List of context strings
+        model_id (str): Model to use (default Titan)
+    Returns:
+        str: The generated answer
+    """
     client = get_bedrock_client()
 
+    # Format the input as specified
+    context = "\n\n".join(context_chunks)
+    formatted_prompt = f"""System: You are a helpful healthcare assistant.\n\nContext:\n{context}\n\nUser question: {prompt}\n"""
+
     body = {
-        "inputText": prompt,
+        "inputText": formatted_prompt,
         "textGenerationConfig": {
             "maxTokenCount": 512,
             "temperature": 0.7,
