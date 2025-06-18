@@ -1,45 +1,45 @@
 # bedrock_wrapper.py
 
+from langchain_aws import BedrockLLM, BedrockEmbeddings
 import boto3
 import json
 import os
 from dotenv import load_dotenv
+from typing import List, Union
 
 load_dotenv()
 
 def get_bedrock_client():
     return boto3.client("bedrock-runtime", region_name=os.getenv("AWS_DEFAULT_REGION"))
 
+def get_bedrock_llm(model_id: str = "amazon.titan-text-express-v1") -> BedrockLLM:
+    """Get a LangChain Bedrock LLM instance."""
+    return BedrockLLM(
+        model_id=model_id,
+        client=get_bedrock_client(),
+        model_kwargs={
+            "maxTokenCount": 512,
+            "temperature": 0.7,
+            "topP": 1,
+            "stopSequences": []
+        },
+        streaming=True
+    )
 
-def embed_texts(text_list, model_id="amazon.titan-embed-text-v2:0"):
-    """Embeds a list of texts using Titan embedding model."""
+def embed_texts(text_list: Union[str, List[str]], model_id: str = "amazon.titan-embed-text-v2:0") -> Union[List[float], List[List[float]]]:
+    """Embeds texts using Titan embedding model through LangChain."""
+    embeddings = BedrockEmbeddings(
+        client=get_bedrock_client(),
+        model_id=model_id
+    )
+    
     if isinstance(text_list, str):
-        text_list = [text_list]
+        return embeddings.embed_query(text_list)
+    return embeddings.embed_documents(text_list)
 
-    client = get_bedrock_client()
+def generate_answer(prompt: str, context_chunks: List[str], model_id: str = "amazon.titan-text-express-v1") -> str:
+    """Generates a response using LangChain's Bedrock integration.
     
-    # Process each text individually
-    embeddings = []
-    for text in text_list:
-        body = {
-            "inputText": text
-        }
-        
-        response = client.invoke_model(
-            modelId=model_id,
-            contentType="application/json",
-            accept="application/json",
-            body=json.dumps(body)
-        )
-        
-        result = json.loads(response["body"].read())
-        embeddings.append(result["embedding"])
-    
-    return embeddings[0] if len(text_list) == 1 else embeddings
-
-
-def generate_answer(prompt, context_chunks, model_id="amazon.titan-text-express-v1"):
-    """Generates a response to a prompt and context using Titan model.
     Args:
         prompt (str): The user question
         context_chunks (List[str]): List of context strings
@@ -47,27 +47,16 @@ def generate_answer(prompt, context_chunks, model_id="amazon.titan-text-express-
     Returns:
         str: The generated answer
     """
-    client = get_bedrock_client()
-
+    llm = get_bedrock_llm(model_id)
+    
     # Format the input as specified
     context = "\n\n".join(context_chunks)
-    formatted_prompt = f"""System: You are a helpful healthcare assistant.\n\nContext:\n{context}\n\nUser question: {prompt}\n"""
+    formatted_prompt = f"""System: You are a helpful healthcare assistant.
 
-    body = {
-        "inputText": formatted_prompt,
-        "textGenerationConfig": {
-            "maxTokenCount": 512,
-            "temperature": 0.7,
-            "topP": 1,
-            "stopSequences": []
-        }
-    }
+Context:
+{context}
 
-    response = client.invoke_model(
-        modelId=model_id,
-        contentType="application/json",
-        accept="application/json",
-        body=json.dumps(body)
-    )
-
-    return json.loads(response["body"].read())["results"][0]["outputText"]
+User question: {prompt}
+"""
+    
+    return llm.predict(formatted_prompt)

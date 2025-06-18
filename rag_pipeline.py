@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
 from bedrock_wrapper import embed_texts, generate_answer
-from retriever import RAGRetriever
+from vector_retriever import VectorRetriever
 
 def generate_answer_with_rag(query: str, k: int = 3) -> Dict[str, Any]:
     """
@@ -14,7 +14,7 @@ def generate_answer_with_rag(query: str, k: int = 3) -> Dict[str, Any]:
         Dict[str, Any]: Dictionary containing the answer and sources
     """
     # Initialize retriever
-    retriever = RAGRetriever()
+    retriever = VectorRetriever()
     
     # Retrieve relevant chunks
     chunks = retriever.retrieve(query, k)

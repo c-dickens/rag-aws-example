@@ -7,9 +7,11 @@ import json
 import numpy as np
 import faiss
 import boto3
+import pickle
 from dotenv import load_dotenv
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
+from langchain_core.documents import Document
 
 # Load environment variables
 load_dotenv()
@@ -23,7 +25,8 @@ if not S3_BUCKET:
 CACHE_DIR = Path("cache")
 EMBEDDINGS_FILE = CACHE_DIR / "embeddings.npy"
 CHUNKS_FILE = CACHE_DIR / "chunks.json"
-FAISS_INDEX_FILE = CACHE_DIR / "faiss_index.bin"
+FAISS_INDEX_FILE = CACHE_DIR / "index.faiss"
+DOCSTORE_FILE = CACHE_DIR / "docstore.pkl"
 PROCESSED_FILES_LIST = CACHE_DIR / "processed_files.json"
 
 def get_s3_pdf_keys() -> List[str]:
@@ -48,7 +51,7 @@ def get_processed_files() -> List[str]:
         return json.load(f)
 
 def save_to_cache(chunks: List[Dict[str, Any]], embeddings: np.ndarray, processed_files: List[str]):
-    """Save chunks, embeddings, and processed files list to cache."""
+    """Save chunks and create FAISS index with pre-computed embeddings."""
     # Create cache directory if it doesn't exist
     CACHE_DIR.mkdir(exist_ok=True)
     
@@ -56,15 +59,36 @@ def save_to_cache(chunks: List[Dict[str, Any]], embeddings: np.ndarray, processe
         # Save embeddings as numpy array
         np.save(EMBEDDINGS_FILE, embeddings)
         
-        # Save chunks as JSON
+        # Save chunks for reference
         with open(CHUNKS_FILE, "w") as f:
             json.dump(chunks, f)
         
-        # Create and save FAISS index
-        dimension = embeddings.shape[1]  # Get embedding dimension
-        index = faiss.IndexFlatL2(dimension)  # Create FAISS index
-        index.add(embeddings.astype('float32'))  # Add vectors to index
+        # Create documents with metadata
+        documents = []
+        for i, chunk in enumerate(chunks):
+            doc = Document(
+                page_content=chunk["text"],
+                metadata={"source": chunk["source"], "chunk_id": chunk["chunk_id"], "idx": i}
+            )
+            documents.append(doc)
+        
+        # Create docstore
+        docstore = {i: doc for i, doc in enumerate(documents)}
+        index_to_docstore_id = {i: i for i in range(len(documents))}
+        
+        # Save docstore
+        with open(DOCSTORE_FILE, "wb") as f:
+            pickle.dump({"docstore": docstore, "index_to_docstore_id": index_to_docstore_id}, f)
+        
+        # Create FAISS index
+        dimension = embeddings.shape[1]
+        index = faiss.IndexFlatL2(dimension)
+        index.add(embeddings.astype(np.float32))
+        
+        # Save FAISS index
         faiss.write_index(index, str(FAISS_INDEX_FILE))
+        
+        print(f"✅ Saved FAISS index with {len(chunks)} vectors of dimension {dimension}")
     
     # Save list of processed files
     with open(PROCESSED_FILES_LIST, 'w') as f:
