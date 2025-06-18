@@ -67,6 +67,11 @@ After it completes you should see these files inside the `cache/` directory:
 - `tests/`: Directory containing all test files
 - `docs/`: Documentation
 - `notebooks/`: Jupyter notebooks for experimentation
+- `vector_retriever.py`: LangChain-based vector store retriever
+- `agent_module.py`: Creates the ReAct agent wired with tools
+- `tool_modules/`: Collection of LangChain tools
+- `observability.py`: Logging and CloudWatch metric helpers
+- `lambda_query.py`/`lambda_ingest.py`: AWS Lambda entrypoints
 
 ## Testing
 
